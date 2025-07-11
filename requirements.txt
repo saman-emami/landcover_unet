@@ -1,0 +1,8 @@
+torch>=2.7.1
+torchvision>=0.22.1
+Pillow>=11.3.0
+albumentations>=2.0.8
+numpy>=2.3.1
+scikit-learn>=1.7.0
+tqdm>=4.67.1
+requests>=2.32.4
