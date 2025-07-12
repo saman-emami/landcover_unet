@@ -83,6 +83,8 @@ class CombinedLoss(nn.Module):
     """
 
     def __init__(self, ce_weight=1.0, dice_weight=1.0):
+        super().__init__()
+
         self.ce_weight = ce_weight
         self.dice_weight = dice_weight
         self.cross_entropy_loss = nn.CrossEntropyLoss()

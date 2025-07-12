@@ -1,4 +1,5 @@
 import os
+import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -9,6 +10,7 @@ import requests
 from sklearn.model_selection import train_test_split
 from typing import List, Tuple, Any, Dict
 
+sys.path.append("../")
 from config import Config
 from models.unet import UNet
 from models.losses import CombinedLoss
@@ -29,7 +31,7 @@ def download_and_extract_dataset() -> None:
         total = int(resp.headers.get("content-length", 0))
 
         with open(zip_path, "wb") as f, tqdm(
-            total=total, unit="B", unit_scale=True, desc="Downloading..."
+            total=total, unit="B", unit_scale=True, desc="Downloading"
         ) as bar:
             for chunk in resp.iter_content(chunk_size=1 << 14):  # 16 KB
                 f.write(chunk)
@@ -37,7 +39,7 @@ def download_and_extract_dataset() -> None:
 
     # Extract
     with zipfile.ZipFile(zip_path) as zf, tqdm(
-        total=len(zf.infolist()), desc="Extracting..."
+        total=len(zf.infolist()), desc="Extracting"
     ) as bar:
         for member in zf.infolist():
             zf.extract(member, Config.RAW_DIR)
@@ -125,7 +127,7 @@ def train_epoch(
     total_loss = 0.0
     metrics.reset()
 
-    pbar = tqdm(train_loader, desc="Training...")
+    pbar = tqdm(train_loader, desc="Training")
 
     for images, masks in pbar:
         images = images.to(device)
@@ -165,7 +167,7 @@ def validate_epoch(
     metrics.reset()
 
     with torch.no_grad():
-        pbar = tqdm(val_loader, desc="Validating...")
+        pbar = tqdm(val_loader, desc="Validating")
         for images, masks in pbar:
             images = images.to(device)
             masks = masks.to(device)
@@ -242,7 +244,7 @@ def main():
 
         # Print results
         print(
-            f"Train Loss: {train_loss:.4f}, Train mIoU: {train_results['mean_iou']:.4f}"
+            f"Train Loss: {train_loss:.4f}, Train mIoU: {train_results['mean_iou']:.4f} \n Class_iou: {train_results["class_iou"]}"
         )
         print(f"Val Loss: {val_loss:.4f}, Val mIoU: {val_results['mean_iou']:.4f}")
 

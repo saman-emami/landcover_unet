@@ -4,9 +4,9 @@ import torch
 class Config:
     # Dataset parameters
     DATASET_URL = "https://landcover.ai.linuxpolska.com/download/landcover.ai.v1.zip"
-    DATA_DIR = "/content/data"
-    RAW_DIR = "/content/data/raw"
-    PROCESSED_DIR = "/content/data/processed"
+    DATA_DIR = "/data"
+    RAW_DIR = "/data/raw"
+    PROCESSED_DIR = "/data/processed"
 
     # Model parameters
     INPUT_CHANNELS = 3  # RGB
