@@ -19,14 +19,15 @@ from utils.metrics import SegmentationMetrics
 from utils.transforms import get_train_transforms, get_val_transforms
 
 
-def download_and_extract_dataset() -> None:
-    """Download and extract LandCover.ai dataset"""
+def download_dataset() -> None:
+    """Download the LandCover.ai dataset"""
+    zip_path = os.path.join(Config.DATA_DIR, Config.DATASET_FILENAME)
+    dataset_already_downloaded = os.path.exists(zip_path)
+    if dataset_already_downloaded:
+        return
 
-    os.makedirs(Config.DATA_DIR, exist_ok=True)
-    zip_path = os.path.join(Config.DATA_DIR, "landcover.ai.v1.zip")
-
-    # Download
     with requests.get(Config.DATASET_URL, stream=True, timeout=30) as resp:
+        os.makedirs(Config.DATA_DIR, exist_ok=True)
         resp.raise_for_status()
         total = int(resp.headers.get("content-length", 0))
 
@@ -37,7 +38,13 @@ def download_and_extract_dataset() -> None:
                 f.write(chunk)
                 bar.update(len(chunk))
 
-    # Extract
+
+def extract_dataset() -> None:
+    dataset_already_extracted = os.path.exists(Config.RAW_DIR)
+    if dataset_already_extracted:
+        return
+
+    zip_path = os.path.join(Config.DATA_DIR, Config.DATASET_FILENAME)
     with zipfile.ZipFile(zip_path) as zf, tqdm(
         total=len(zf.infolist()), desc="Extracting"
     ) as bar:
@@ -54,7 +61,7 @@ def prepare_data_splits() -> Tuple[List[str], List[str], List[str]]:
     image_dir = os.path.join(Config.RAW_DIR, "images")
     image_files = [f for f in os.listdir(image_dir) if f.endswith(".tif")]
 
-    random_seed = 40
+    random_seed = 42
 
     # Split Data
     train_files, temp_files = train_test_split(
@@ -62,6 +69,7 @@ def prepare_data_splits() -> Tuple[List[str], List[str], List[str]]:
     )
 
     val_size = Config.VAL_SPLIT / (Config.VAL_SPLIT + Config.TEST_SPLIT)
+
     val_files, test_files = train_test_split(
         temp_files, test_size=(1 - val_size), random_state=random_seed
     )
@@ -191,7 +199,8 @@ def main():
     print(f"Using device: {device}")
 
     # Download and prepare data
-    download_and_extract_dataset()
+    download_dataset()
+    extract_dataset()
     train_files, val_files, test_files = prepare_data_splits()
     train_loader, val_loader = create_data_loaders(train_files, val_files)
 
