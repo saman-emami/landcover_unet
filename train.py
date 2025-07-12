@@ -1,5 +1,4 @@
 import os
-import sys
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,7 +9,6 @@ import requests
 from sklearn.model_selection import train_test_split
 from typing import List, Tuple, Any, Dict
 
-sys.path.append("../")
 from config import Config
 from models.unet import UNet
 from models.losses import CombinedLoss
@@ -253,7 +251,7 @@ def main():
 
         # Print results
         print(
-            f"Train Loss: {train_loss:.4f}, Train mIoU: {train_results['mean_iou']:.4f} \n Class_iou: {train_results["class_iou"]}"
+            f"Train Loss: {train_loss:.4f}, Train mIoU: {train_results['mean_iou']:.4f} \n Class_iou: {train_results['class_iou']}"
         )
         print(f"Val Loss: {val_loss:.4f}, Val mIoU: {val_results['mean_iou']:.4f}")
 
