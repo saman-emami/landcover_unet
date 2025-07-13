@@ -23,48 +23,35 @@ class LandCoverDataset(Dataset):
         num_classes (int): number of semantic classes (incl. background).
         transform (Optional[albumentations.Compose]):
             Optional albumentations transformation
-
-    Returns:
-        Tuple[torch.Tensor, torch.Tensor]: Tuple of (image, mask) tensors.
-            - image: FloatTensor of shape [3, H, W], normalized to [0, 1].
-            - mask: LongTensor of shape [H, W], containing integer class labels.
     """
 
     def __init__(
         self,
-        image_dir: str,
-        mask_dir: str,
-        image_list: List[str],
+        processed_data_dir: str,
         num_classes: int,
         transform: Optional[A.Compose] = None,
     ):
-        self.image_dir = image_dir
-        self.mask_dir = mask_dir
-        self.image_list = image_list
+        self.processed_data_dir = processed_data_dir
         self.num_classes = num_classes
         self.transform = transform
 
+        data = np.load(processed_data_dir)
+
+        self.images = data["images"]
+        self.masks = data["masks"]
+
     def __len__(self) -> int:
-        return len(self.image_list)
+        return len(self.images)
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """Loads and returns a single sample (image, mask) at the given index."""
 
-        # Get the image filename for this index
-        image_name = self.image_list[index]
-
-        image_path = os.path.join(self.image_dir, image_name)
-        image = Image.open(image_path).convert("RGB")
-
-        mask_path = os.path.join(self.mask_dir, image_name)
-        mask = Image.open(mask_path).convert("L")
-
-        image_np = np.array(image)
-        mask_np = np.array(mask)
+        image = self.images[index]
+        mask = self.masks[index]
 
         # If a transform is provided (albumentations), apply it to both image and mask
         if self.transform:
-            transformed = self.transform(image=image_np, mask=mask_np)
+            transformed = self.transform(image=image, mask=mask)
             image, mask = transformed["image"], transformed["mask"]
 
         image_tensor = torchvision.transforms.ToTensor()(image)

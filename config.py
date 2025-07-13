@@ -5,14 +5,13 @@ class Config:
     # Dataset parameters
     DATASET_URL = "https://landcover.ai.linuxpolska.com/download/landcover.ai.v1.zip"
     DATASET_FILENAME = "landcover.ai.v1.zip"
-    DATA_DIR = "/data"
-    RAW_DIR = "/data/raw"
-    PROCESSED_DIR = "/data/processed"
+    DATA_DIR = "/home/saman/datasets"
+    RAW_DIR = "/home/saman/datasets/raw"
+    PROCESSED_DIR = "/home/saman/datasets/processed"
 
     # Model parameters
     INPUT_CHANNELS = 3  # RGB
     NUM_CLASSES = 5  # Background + 4 classes
-    IMG_SIZE = 512  # Patch size
 
     # Loss parameters
     LOSS_SMOOTH = 1e-6
@@ -32,6 +31,8 @@ class Config:
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Augmentation parameters
+    PATCH_SIZE = 512  # Patch size
+    SLICING_STRIDE = 256
     ROTATION_DEGREES = 30
     HORIZONTAL_FLIP_PROB = 0.5
     VERTICAL_FLIP_PROB = 0.5

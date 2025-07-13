@@ -85,18 +85,14 @@ def create_data_loaders(
     mask_dir = os.path.join(Config.RAW_DIR, "masks")
 
     train_dataset = LandCoverDataset(
-        image_dir,
-        mask_dir,
-        train_files,
-        transform=get_train_transforms(Config.IMG_SIZE),
+        processed_data_dir=Config.PROCESSED_DIR,
+        transform=get_train_transforms(Config.PATCH_SIZE),
         num_classes=Config.NUM_CLASSES,
     )
 
     val_dataset = LandCoverDataset(
-        image_dir,
-        mask_dir,
-        val_files,
-        transform=get_val_transforms(Config.IMG_SIZE),
+        processed_data_dir=Config.PROCESSED_DIR,
+        transform=get_val_transforms(Config.PATCH_SIZE),
         num_classes=Config.NUM_CLASSES,
     )
 
