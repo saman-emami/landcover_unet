@@ -2,7 +2,7 @@ import os
 import argparse
 import requests
 from tqdm import tqdm
-from ..configs.config import Config
+from configs.config import Config
 
 
 class DownloadDatasetArgs(argparse.Namespace):

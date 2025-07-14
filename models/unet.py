@@ -7,9 +7,13 @@ class DoubleConv(nn.Module):
     """
     Double convolution block: (Conv -> BatchNorm -> ReLU) * 2
 
-    Parameters:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
+    Parameters
+    ----------
+    in_channels: int
+        Number of input channels.
+
+    out_channels: int
+        Number of output channels.
     """
 
     def __init__(self, in_channels, out_channels):
@@ -25,15 +29,6 @@ class DoubleConv(nn.Module):
         )
 
     def forward(self, x):
-        """
-        Applies two consecutive Conv-BN-ReLU blocks to the input tensor.
-
-        Parameters:
-            x (torch.Tensor): Input tensor of shape [batch_size, in_channels, H, W].
-
-        Returns:
-            torch.Tensor: Output tensor of shape [batch_size, out_channels, H, W].
-        """
         return self.conv(x)
 
 
@@ -41,9 +36,12 @@ class DownSample(nn.Module):
     """
     Downsampling block: MaxPool2d -> DoubleConv
 
-    Parameters:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
+    Parameters
+    ----------
+    in_channels: int
+        Number of input channels.
+    out_channels: int
+        Number of output channels.
     """
 
     def __init__(self, in_channels, out_channels):
@@ -54,15 +52,6 @@ class DownSample(nn.Module):
         )
 
     def forward(self, x):
-        """
-        Applies 2x2 max pooling followed by a double convolution.
-
-        Parameters:
-            x (torch.Tensor): Input tensor of shape [batch_size, in_channels, H, W].
-
-        Returns:
-            torch.Tensor: Output tensor of shape [batch_size, out_channels, H/2, W/2].
-        """
         return self.pool_conv(x)
 
 
@@ -70,9 +59,13 @@ class UpSample(nn.Module):
     """
     Upsampling block: TransposedConv -> Concatenate -> DoubleConv
 
-    Parameters:
-        in_channels (int): Number of input channels (from previous decoder layer).
-        out_channels (int): Number of output channels.
+    Parameters
+    ----------
+    in_channels: int
+        Number of input channels (from previous decoder layer).
+
+    out_channels: int
+        Number of output channels.
     """
 
     def __init__(self, in_channels, out_channels):
@@ -82,17 +75,6 @@ class UpSample(nn.Module):
         self.conv = DoubleConv(in_channels, out_channels)
 
     def forward(self, x1, x2):
-        """
-        Upsamples x1, pads if necessary, concatenates with x2, then applies double convolution.
-
-        Parameters:
-            x1 (torch.Tensor): Upsampled features, shape [batch_size, in_channels, H, W].
-            x2 (torch.Tensor): Skip connection features, shape [batch_size, in_channels // 2, H*2, W*2].
-
-        Returns:
-            torch.Tensor: Output tensor of shape [batch_size, out_channels, H*2, W*2].
-        """
-
         # x1: upsampled features, x2: skip connection features
         x1 = self.up(x1)
 
@@ -114,9 +96,13 @@ class UNet(nn.Module):
     """
     UNet architecture for semantic segmentation.
 
-    Parameters:
-        in_channels (int): Number of input channels (e.g., 3 for RGB).
-        num_classes (int): Number of output classes for segmentation.
+    Parameters
+    ----------
+    in_channels: int
+        Number of input channels (e.g., 3 for RGB).
+
+    num_classes: int
+        Number of output classes for segmentation.
     """
 
     def __init__(self, in_channels, num_classes=5):
@@ -139,15 +125,6 @@ class UNet(nn.Module):
         self.output_conv = nn.Conv2d(64, num_classes, kernel_size=1)
 
     def forward(self, x):
-        """
-        Forward pass of the UNet model.
-
-        Parameters:
-            x (torch.Tensor): Input tensor of shape [batch_size, in_channels, H, W].
-
-        Returns:
-            torch.Tensor: Output tensor of shape [batch_size, num_classes, H, W].
-        """
         # Encoder
         x1 = self.input_conv(x)  # [B, 64, H, W]
         x2 = self.down1(x1)  # [B, 128, H/2, W/2]

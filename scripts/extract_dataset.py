@@ -2,7 +2,7 @@ import argparse
 import zipfile
 import os
 from tqdm import tqdm
-from ..configs.config import Config
+from configs.config import Config
 
 
 class ExtractDatasetArgs(argparse.Namespace):
@@ -12,8 +12,27 @@ class ExtractDatasetArgs(argparse.Namespace):
 
 
 def extract_dataset(raw_dir: str, dataset_file_name: str, data_dir: str) -> None:
+    """
+    Extract the LandCover.ai dataset zip file into the specified directory.
+
+    If the extraction directory already exists skips the extraction. Otherwise
+    extracts all contents from the zip file into the raw data directory.
+
+    Parameters
+    ----------
+    raw_dir : str
+        Target directory to extract the dataset into.
+
+    dataset_file_name : str
+        Name of the dataset zip file to extract.
+
+    data_dir : str
+        Directory containing the dataset zip file.
+    """
+
     dataset_already_extracted = os.path.exists(raw_dir)
     if dataset_already_extracted:
+        print("Dataset has already been extracted.")
         return
 
     zip_path = os.path.join(data_dir, dataset_file_name)
@@ -33,11 +52,11 @@ def create_arg_parser() -> argparse.ArgumentParser:
         argparse.ArgumentParser: Configured parser object.
     """
     parser = argparse.ArgumentParser(
-        description="Slice LandCover.ai dataset into patches"
+        description="Extract the LandCover.ai dataset zip file."
     )
     parser.add_argument(
         "--raw-dir",
-        default=Config.DATA_DIR,
+        default=Config.RAW_DIR,
         type=str,
         help="Where the raw dataset should be extracted into.",
     )

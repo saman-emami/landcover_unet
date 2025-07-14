@@ -2,7 +2,6 @@ import os
 import cv2
 import torch
 import torch.nn.functional as F
-import numpy as np
 from torch.utils.data import Dataset
 import torchvision
 import albumentations as A
@@ -16,13 +15,22 @@ class LandCoverDataset(Dataset):
     Each sample consists of an RGB aerial image and its corresponding segmentation mask.
     The dataset supports optional image/mask albumentations transformation.
 
-    Parameters:
-        image_dir (str): Directory containing input RGB images.
-        mask_dir (str): Directory containing segmentation masks.
-        image_list (List[str]): List of image filenames (should match between images and masks).
-        num_classes (int): number of semantic classes (incl. background).
-        transform (Optional[albumentations.Compose]):
-            Optional albumentations transformation
+    Parameters
+    ----------
+    image_dir: str
+        Directory containing input RGB images.
+
+    mask_dir: str
+        Directory containing segmentation masks.
+
+    image_list: List[str]
+        List of image filenames (should match between images and masks).
+
+    num_classes: int
+        number of semantic classes (incl. background).
+
+    transform: Optional[albumentations.Compose]
+        Optional albumentations transformation
     """
 
     def __init__(
@@ -43,8 +51,6 @@ class LandCoverDataset(Dataset):
         return len(self.image_list)
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Loads and returns a single sample (image, mask) at the given index."""
-
         # Get the image filename for this index
         image_name = self.image_list[index]
 

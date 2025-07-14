@@ -2,12 +2,10 @@ import gc
 import argparse
 from pathlib import Path
 from typing import Optional, Tuple
-from warnings import warn
 import cv2
-import os
 from tqdm import tqdm
 import cupy as cp
-from ..configs.config import Config
+from configs.config import Config
 
 
 class ProcessDatasetArgs(argparse.Namespace):
@@ -51,7 +49,7 @@ def read_image(image_path: str) -> Tuple[cp.ndarray, Tuple[int, int], bool]:
     try:
         image = cp.asarray(image)
 
-        if cp.cuda.runtime.cp.cuda.runtime.getDeviceCount() == 0:
+        if cp.cuda.runtime.getDeviceCount() == 0:
             print("Warning: No GPU detected. Falling back to CPU emulation via CuPy.")
 
     except Exception as e:
@@ -108,11 +106,7 @@ def slice_image(
 
             patch_np = cp.asnumpy(patch)
             file_name = str(Path(image_path).stem)
-            save_path = (
-                Path(save_dir)
-                / ("masks" if is_mask else "images")
-                / (file_name + f"-{y}-{x}.tif")
-            )
+            save_path = Path(save_dir) / (file_name + f"-{y}-{x}.tif")
             cv2.imwrite(str(save_path), patch_np)
 
     del image, shape, is_mask, patch, patch_np
@@ -153,6 +147,12 @@ def process_raw_dataset(
     raw_images_dir = raw_dir / "images"
     raw_mask_dir = raw_dir / "masks"
 
+    processed_images_dir = processed_dir / "images"
+    processed_masks_dir = processed_dir / "masks"
+
+    processed_images_dir.mkdir(exist_ok=True, parents=True)
+    processed_masks_dir.mkdir(exist_ok=True, parents=True)
+
     if stride is None:
         stride = patch_size
 
@@ -166,7 +166,7 @@ def process_raw_dataset(
         raise ValueError(f"No .tif masks found in {raw_mask_dir}")
 
     for image_path, mask_path in tqdm(
-        zip(image_paths, mask_paths), desc="Processing dataset"
+        zip(image_paths, mask_paths), total=len(image_paths), desc="Processing dataset"
     ):
         if image_path.name != mask_path.name:
             ValueError("There is a mismatch in the images and masks directories.")
@@ -174,17 +174,17 @@ def process_raw_dataset(
         slice_image(
             image_path=str(image_path),
             patch_size=patch_size,
-            save_dir=str(processed_dir / "images"),
+            save_dir=str(processed_images_dir),
             stride=stride,
         )
         slice_image(
             image_path=str(mask_path),
             patch_size=patch_size,
-            save_dir=str(processed_dir / "masks"),
+            save_dir=str(processed_masks_dir),
             stride=stride,
         )
 
-    cp.get_default_memory_pool().free_all_blocks()
+    cp.patchget_default_memory_pool().free_all_blocks()
     gc.collect()
 
 

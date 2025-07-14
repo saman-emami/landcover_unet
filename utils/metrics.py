@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from ..configs.config import Config
+from configs.config import Config
 from typing import Optional, Dict, Union, List
 
 
@@ -14,19 +14,24 @@ def calculate_iou(
     """
     Compute **Intersection-over-Union (IoU)** for every class.
 
-    Parameters:
-        predictions (torch.Tensor):
-            Raw model outputs (logits), shape ``[batch_size, H, W]``.
-        targets (torch.Tensor):
-            Ground truth labels with shape ``[batch_size, H, W]``.
-        num_classes (int):
-            Total number of classes (including background).
-        ignore_index (int | None, default=None):
-            Class ID to ignore (e.g. background). If ``None`` no class is skipped.
+    Parameters
+    ----------
+    predictions: torch.Tensor
+        Raw model outputs, shape ``[batch_size, H, W]``.
 
-    Returns:
-        list[float]:
-            IoU for each class *except* the ignored one.
+    targets: torch.Tensor
+        Ground truth labels with shape ``[batch_size, H, W]``.
+
+    num_classes: int
+        Total number of classes including background.
+
+    ignore_index: Optional[int]
+        Class ID to ignore (e.g. background). If ``None`` no class is skipped.
+
+    Returns
+    -------
+    iou_scores: list[float]
+        IoU for each class *except* the ignored one.
     """
 
     ious = []
@@ -58,19 +63,24 @@ def calculate_dice(
     """
     Compute Dice coefficient for each class.
 
-    Parameters:
-        predictions (torch.Tensor):
-            Raw model outputs (logits), shape ``[batch_size, H, W]``.
-        targets (torch.Tensor):
-            Ground truth labels with shape ``[batch_size, H, W]``.
-        num_classes (int):
-            Total number of classes (including background).
-        ignore_index (int | None, default=None):
-            Class ID to ignore (e.g. background). If ``None`` no class is skipped.
+    Parameters
+    ----------
+    predictions: torch.Tensor
+        Raw model outputs (logits), shape ``[batch_size, H, W]``.
 
-    Returns:
-        list[float]:
-            Dice coefficient for each class *except* the ignored one.
+    targets: torch.Tensor
+        Ground truth labels with shape ``[batch_size, H, W]``.
+
+    num_classes: int
+        Total number of classes including background.
+
+    ignore_index: Optional[int]
+        Class ID to ignore (e.g. background). If ``None`` no class is skipped.
+
+    Returns
+    -------
+    dice_scores: list[float]
+        Dice coefficient for each class *except* the ignored one.
     """
     dice_scores = []
 
@@ -95,27 +105,34 @@ def calculate_dice(
 
 
 class SegmentationMetrics:
-    """
-    Running IoU & Dice tracker.
-
-    Parameters:
-        num_classes (int):
-            Number of segmentation classes.
-        class_names (Optional[List[str]]):
-            Human-readable class names; falls back to “Class_{i}”,
-    """
-
     def __init__(
         self,
         num_classes: int,
         class_names: Optional[List[str]] = None,
     ) -> None:
+        """
+        This class accumulates IoU and Dice scores over multiple batches and
+        computes averages.
+
+        Parameters
+        ----------
+        num_classes: int
+            Total number of classes including background.
+
+        class_names: Optional[List[str]]
+            List of class names for reporting. defaults to "Class_0", etc.
+        """
+
         self.num_classes = num_classes
         self.class_names = class_names or [f"Class_{i}" for i in range(num_classes)]
         self.reset()
 
     def reset(self):
-        """Clear all accumulated statistics."""
+        """
+        Clear all accumulated statistics.
+
+        This method resets the internal counters for IoU, Dice, and batch count,
+        """
         self.total_iou = [0.0] * self.num_classes
         self.total_dice = [0.0] * self.num_classes
         self.batches = 0
@@ -125,7 +142,19 @@ class SegmentationMetrics:
         predictions: torch.Tensor,  # logits [B, C, H, W]
         targets: torch.Tensor,  # one-hot [B, C, H, W]
     ):
-        """Add a new batch to the metric buffers."""
+        """
+        This method computes per-batch IoU and Dice scores and accumulates them.
+        It handles conversion from logits and one-hot targets to class indices.
+
+        Parameters
+        ----------
+        predictions: torch.Tensor
+            Model logits with shape [batch_size, num_classes, H, W].
+
+        targets: torch.Tensor
+            Ground truth with shape [batch_size, num_classes, H, W] (one-hot).
+        """
+
         predictions = torch.argmax(predictions, dim=1)
 
         if targets.dim() == 4:  # one-hot
@@ -143,8 +172,22 @@ class SegmentationMetrics:
         self.batches += 1
 
     def get_metrics(self) -> Dict[str, Union[float, Dict[str, float]]]:
-        """Compute mean IoU & Dice and per-class scores."""
+        """
+        Compute mean IoU & Dice and per-class scores.
 
+        This method averages the accumulated scores over all batches and returns
+        a dictionary with mean and per-class metrics.
+
+        Returns
+        -------
+        metrics: Dict[str, Union[float, Dict[str, float]]]
+            Dictionary containing 'mean_iou', 'mean_dice', 'class_iou', and 'class_dice'.
+
+        Raises
+        ------
+        RuntimeError:
+            Raises an error if no batches have been processed.
+        """
         if self.batches == 0:
             raise RuntimeError("No batches processed. call update() first.")
 
