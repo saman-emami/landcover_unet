@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional, Tuple
 import cv2
 from tqdm import tqdm
-import cupy as cp
+import numpy as np
 from configs.config import Config
 
 
@@ -15,7 +15,7 @@ class ProcessDatasetArgs(argparse.Namespace):
     stride: int
 
 
-def read_image(image_path: str) -> Tuple[cp.ndarray, Tuple[int, int], bool]:
+def read_image(image_path: str) -> Tuple[np.ndarray, Tuple[int, int], bool]:
     """
     Reads an image from the specified file path using OpenCV and determines if it is a mask.
 
@@ -45,15 +45,6 @@ def read_image(image_path: str) -> Tuple[cp.ndarray, Tuple[int, int], bool]:
 
     if image is None:
         raise ValueError(f"Failed to load image at {image_path}")
-
-    try:
-        image = cp.asarray(image)
-
-        if cp.cuda.runtime.getDeviceCount() == 0:
-            print("Warning: No GPU detected. Falling back to CPU emulation via CuPy.")
-
-    except Exception as e:
-        raise ValueError(f"Failed to transfer image to GPU: {str(e)}")
 
     is_mask = image.ndim == 2
     shape = image.shape[:2]
@@ -91,8 +82,6 @@ def slice_image(
 
     height, width = shape  # Initialize to None
 
-    patch, patch_np = None, None  # Initialize them to None
-
     for y in range(0, height, stride):
         for x in range(0, width, stride):
 
@@ -104,13 +93,12 @@ def slice_image(
             else:
                 patch = image[y : y + patch_size, x : x + patch_size, :]
 
-            patch_np = cp.asnumpy(patch)
             file_name = str(Path(image_path).stem)
             save_path = Path(save_dir) / (file_name + f"-{y}-{x}.tif")
-            cv2.imwrite(str(save_path), patch_np)
+            cv2.imwrite(str(save_path), patch)
+            del patch
 
-    del image, shape, is_mask, patch, patch_np
-    cp.get_default_memory_pool().free_all_blocks()
+    del image, shape, is_mask
     gc.collect()
 
 
@@ -183,8 +171,6 @@ def process_raw_dataset(
             save_dir=str(processed_masks_dir),
             stride=stride,
         )
-
-    cp.patchget_default_memory_pool().free_all_blocks()
     gc.collect()
 
 
