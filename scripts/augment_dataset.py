@@ -1,11 +1,11 @@
-import numpy as np
-from typing import Optional
-import cv2
+import gc
 import argparse
 from pathlib import Path
+from typing import Optional, Tuple
+import cv2
+import numpy as np
 from tqdm import tqdm
 from ..configs.config import Config
-from typing import Tuple
 
 
 class AugmentDatsetArgs(argparse.Namespace):
@@ -95,6 +95,9 @@ def slice_image(
 
             cv2.imwrite(save_path, patch)
 
+    del image, shape, is_mask
+    gc.collect()
+
 
 def process_raw_dataset(
     raw_dir: Path,
@@ -159,6 +162,8 @@ def process_raw_dataset(
             save_path=str(processed_dir / "masks"),
             stride=stride,
         )
+
+    gc.collect()
 
 
 def main(args: AugmentDatsetArgs) -> None:
