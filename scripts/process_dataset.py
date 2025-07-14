@@ -2,9 +2,11 @@ import gc
 import argparse
 from pathlib import Path
 from typing import Optional, Tuple
+from warnings import warn
 import cv2
-import numpy as np
+import os
 from tqdm import tqdm
+import cupy as cp
 from ..configs.config import Config
 
 
@@ -15,7 +17,7 @@ class AugmentDatsetArgs(argparse.Namespace):
     stride: int
 
 
-def read_image(image_path: str) -> Tuple[np.ndarray, Tuple[int, int], bool]:
+def read_image(image_path: str) -> Tuple[cp.ndarray, Tuple[int, int], bool]:
     """
     Reads an image from the specified file path using OpenCV and determines if it is a mask.
 
@@ -27,7 +29,7 @@ def read_image(image_path: str) -> Tuple[np.ndarray, Tuple[int, int], bool]:
     Returns
     -------
     image: np.ndarray
-        The loaded image as a NumPy array.
+        The loaded image as a CuPy array.
 
     shape: Tuple[int, int]
         The shape of the image as (height, width).
@@ -38,16 +40,24 @@ def read_image(image_path: str) -> Tuple[np.ndarray, Tuple[int, int], bool]:
     Raises
     ------
     ValueError:
-        If the image at `image_path` doesn't exist.
+        If the image at `image_path` doesn't exist or loading fails.
     """
 
-    image = cv2.imread(image_path)
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
 
     if image is None:
         raise ValueError(f"Failed to load image at {image_path}")
 
-    is_mask = image.ndim == 2
+    try:
+        image = cp.asarray(image)
 
+        if cp.cuda.runtime.cp.cuda.runtime.getDeviceCount() == 0:
+            print("Warning: No GPU detected. Falling back to CPU emulation via CuPy.")
+
+    except Exception as e:
+        raise ValueError(f"Failed to transfer image to GPU: {str(e)}")
+
+    is_mask = image.ndim == 2
     shape = image.shape[:2]
 
     return (image, shape, is_mask)
@@ -56,12 +66,13 @@ def read_image(image_path: str) -> Tuple[np.ndarray, Tuple[int, int], bool]:
 def slice_image(
     image_path: str,
     patch_size: int,
-    save_path: str,
+    save_dir: str,
     stride: int,
 ) -> None:
     """
     Slices an the image at `image_path` to smaller patches of size`patch_size`
-    with the given `stride`. Saves the resulting patches to `save_path`
+    with the given `stride`. Saves the resulting patches to `save_path`.
+    Uses GPU for array operations and releases memory after processing.
 
     Parameters
     ----------
@@ -71,7 +82,7 @@ def slice_image(
     patch_size: int
         Size of the sliced patches.
 
-    save_path: str
+    save_dir: str
         Path to where the pathces should be saved.
 
     stride: int
@@ -80,7 +91,9 @@ def slice_image(
 
     image, shape, is_mask = read_image(image_path)
 
-    height, width = shape
+    height, width = shape  # Initialize to None
+
+    patch, patch_np = None, None  # Initialize them to None
 
     for y in range(0, height, stride):
         for x in range(0, width, stride):
@@ -93,9 +106,17 @@ def slice_image(
             else:
                 patch = image[y : y + patch_size, x : x + patch_size, :]
 
-            cv2.imwrite(save_path, patch)
+            patch_np = cp.asnumpy(patch)
+            file_name = str(Path(image_path).stem)
+            save_path = (
+                Path(save_dir)
+                / ("masks" if is_mask else "images")
+                / (file_name + f"-{y}-{x}.tif")
+            )
+            cv2.imwrite(str(save_path), patch_np)
 
-    del image, shape, is_mask
+    del image, shape, is_mask, patch, patch_np
+    cp.get_default_memory_pool().free_all_blocks()
     gc.collect()
 
 
@@ -125,7 +146,7 @@ def process_raw_dataset(
     Raises
     ------
     ValueError:
-        If no images are found at raw_dir/images or raw_dir/masks
+        If no images are found at raw_dir/images or raw_dir/masks, or mismatch in files.
 
     """
 
@@ -153,16 +174,17 @@ def process_raw_dataset(
         slice_image(
             image_path=str(image_path),
             patch_size=patch_size,
-            save_path=str(processed_dir / "images"),
+            save_dir=str(processed_dir / "images"),
             stride=stride,
         )
         slice_image(
             image_path=str(mask_path),
             patch_size=patch_size,
-            save_path=str(processed_dir / "masks"),
+            save_dir=str(processed_dir / "masks"),
             stride=stride,
         )
 
+    cp.get_default_memory_pool().free_all_blocks()
     gc.collect()
 
 

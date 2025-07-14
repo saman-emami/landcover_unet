@@ -54,12 +54,9 @@ class LandCoverDataset(Dataset):
         mask_path = os.path.join(self.mask_dir, image_name)
         mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
 
-        image_np = np.array(image)
-        mask_np = np.array(mask)
-
         # If a transform is provided (albumentations), apply it to both image and mask
         if self.transform:
-            transformed = self.transform(image=image_np, mask=mask_np)
+            transformed = self.transform(image=image, mask=mask)
             image, mask = transformed["image"], transformed["mask"]
 
         image_tensor = torchvision.transforms.ToTensor()(image)
