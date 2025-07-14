@@ -118,6 +118,12 @@ def process_raw_dataset(
 
     stride: Optional[int] = None
         Stride of the sliding window for slicing. internally defaults to `patch_size`.
+
+    Raises
+    ------
+    ValueError:
+        If no images are found at raw_dir/images or raw_dir/masks
+
     """
 
     raw_images_dir = raw_dir / "images"
