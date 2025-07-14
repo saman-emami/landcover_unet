@@ -1,5 +1,5 @@
 import os
-from PIL import Image
+import cv2
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -49,10 +49,10 @@ class LandCoverDataset(Dataset):
         image_name = self.image_list[index]
 
         image_path = os.path.join(self.image_dir, image_name)
-        image = Image.open(image_path).convert("RGB")
+        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
 
         mask_path = os.path.join(self.mask_dir, image_name)
-        mask = Image.open(mask_path).convert("L")
+        mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
 
         image_np = np.array(image)
         mask_np = np.array(mask)
