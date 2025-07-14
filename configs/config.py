@@ -4,7 +4,7 @@ import torch
 class Config:
     # Dataset parameters
     DATASET_URL = "https://landcover.ai.linuxpolska.com/download/landcover.ai.v1.zip"
-    DATASET_FILENAME = "landcover.ai.v1.zip"
+    DATASET_FILE_NAME = "landcover.ai.v1.zip"
     DATA_DIR = "/home/saman/datasets"
     RAW_DIR = "/home/saman/datasets/raw"
     PROCESSED_DIR = "/home/saman/datasets/processed"

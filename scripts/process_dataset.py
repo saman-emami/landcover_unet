@@ -10,7 +10,7 @@ import cupy as cp
 from ..configs.config import Config
 
 
-class AugmentDatsetArgs(argparse.Namespace):
+class ProcessDatasetArgs(argparse.Namespace):
     raw_dir: Path
     processed_dir: Path
     patch_size: int
@@ -188,7 +188,7 @@ def process_raw_dataset(
     gc.collect()
 
 
-def main(args: AugmentDatsetArgs) -> None:
+def main(args: ProcessDatasetArgs) -> None:
     raw_dir = Path(args.raw_dir)
     processed_dir = Path(args.processed_dir)
 
@@ -214,7 +214,7 @@ def create_arg_parser() -> argparse.ArgumentParser:
         "--raw-dir",
         default=Config.RAW_DIR,
         type=Path,
-        help="Root directory with images/ and masks/",
+        help="Where the raw dataset should be read from.",
     )
     parser.add_argument(
         "--processed-dir",
@@ -240,5 +240,5 @@ def create_arg_parser() -> argparse.ArgumentParser:
 
 if __name__ == "__main__":
     parser = create_arg_parser()
-    args = parser.parse_args(namespace=AugmentDatsetArgs())
+    args = parser.parse_args(namespace=ProcessDatasetArgs())
     main(args)

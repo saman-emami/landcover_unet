@@ -4,8 +4,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import zipfile
-import requests
 from sklearn.model_selection import train_test_split
 from typing import List, Tuple, Any, Dict
 
@@ -17,46 +15,12 @@ from ..utils.metrics import SegmentationMetrics
 from ..utils.transforms import get_train_transforms, get_val_transforms
 
 
-def download_dataset() -> None:
-    """Download the LandCover.ai dataset"""
-    zip_path = os.path.join(Config.DATA_DIR, Config.DATASET_FILENAME)
-    dataset_already_downloaded = os.path.exists(zip_path)
-    if dataset_already_downloaded:
-        return
-
-    with requests.get(Config.DATASET_URL, stream=True, timeout=30) as resp:
-        os.makedirs(Config.DATA_DIR, exist_ok=True)
-        resp.raise_for_status()
-        total = int(resp.headers.get("content-length", 0))
-
-        with open(zip_path, "wb") as f, tqdm(
-            total=total, unit="B", unit_scale=True, desc="Downloading"
-        ) as bar:
-            for chunk in resp.iter_content(chunk_size=1 << 14):  # 16 KB
-                f.write(chunk)
-                bar.update(len(chunk))
-
-
-def extract_dataset() -> None:
-    dataset_already_extracted = os.path.exists(Config.RAW_DIR)
-    if dataset_already_extracted:
-        return
-
-    zip_path = os.path.join(Config.DATA_DIR, Config.DATASET_FILENAME)
-    with zipfile.ZipFile(zip_path) as zf, tqdm(
-        total=len(zf.infolist()), desc="Extracting"
-    ) as bar:
-        for member in zf.infolist():
-            zf.extract(member, Config.RAW_DIR)
-            bar.update(1)
-
-
 def prepare_data_splits() -> Tuple[List[str], List[str], List[str]]:
     """Prepare train/val/test splits"""
 
     # Get list of image files
 
-    image_dir = os.path.join(Config.RAW_DIR, "images")
+    image_dir = os.path.join(Config.PROCESSED_DIR, "images")
     image_files = [f for f in os.listdir(image_dir) if f.endswith(".tif")]
 
     random_seed = 42
@@ -196,9 +160,6 @@ def main():
     device = Config.DEVICE
     print(f"Using device: {device}")
 
-    # Download and prepare data
-    download_dataset()
-    extract_dataset()
     train_files, val_files, test_files = prepare_data_splits()
     train_loader, val_loader = create_data_loaders(train_files, val_files)
 
