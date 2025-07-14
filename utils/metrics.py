@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from config import Config
+from ..configs.config import Config
 from typing import Optional, Dict, Union, List
 
 

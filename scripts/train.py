@@ -9,12 +9,12 @@ import requests
 from sklearn.model_selection import train_test_split
 from typing import List, Tuple, Any, Dict
 
-from config import Config
-from models.unet import UNet
-from models.losses import CombinedLoss
-from utils.dataset import LandCoverDataset
-from utils.metrics import SegmentationMetrics
-from utils.transforms import get_train_transforms, get_val_transforms
+from ..configs.config import Config
+from ..models.unet import UNet
+from ..models.losses import CombinedLoss
+from ..utils.dataset import LandCoverDataset
+from ..utils.metrics import SegmentationMetrics
+from ..utils.transforms import get_train_transforms, get_val_transforms
 
 
 def download_dataset() -> None:
@@ -81,17 +81,21 @@ def create_data_loaders(
 ) -> Tuple[DataLoader, DataLoader]:
     """Create data loaders for training and validation"""
 
-    image_dir = os.path.join(Config.RAW_DIR, "images")
-    mask_dir = os.path.join(Config.RAW_DIR, "masks")
+    image_dir = os.path.join(Config.PROCESSED_DIR, "images")
+    mask_dir = os.path.join(Config.PROCESSED_DIR, "masks")
 
     train_dataset = LandCoverDataset(
-        processed_data_dir=Config.PROCESSED_DIR,
+        image_dir,
+        mask_dir,
+        train_files,
         transform=get_train_transforms(Config.PATCH_SIZE),
         num_classes=Config.NUM_CLASSES,
     )
 
     val_dataset = LandCoverDataset(
-        processed_data_dir=Config.PROCESSED_DIR,
+        image_dir,
+        mask_dir,
+        val_files,
         transform=get_val_transforms(Config.PATCH_SIZE),
         num_classes=Config.NUM_CLASSES,
     )
